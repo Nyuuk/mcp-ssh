@@ -18,8 +18,11 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 
 // Required libraries
-const { NodeSSH } = require('node-ssh');
+const { spawn, exec } = require('child_process');
+const { promisify } = require('util');
 const sshConfig = require('ssh-config');
+
+const execAsync = promisify(exec);
 
 // Import MCP components using proper export paths
 const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
@@ -145,7 +148,6 @@ class SSHConfigParser {
 // SSH Client Implementation
 class SSHClient {
   constructor() {
-    this.ssh = new NodeSSH();
     this.configParser = new SSHConfigParser();
   }
 
@@ -155,26 +157,27 @@ class SSHClient {
 
   async runRemoteCommand(hostAlias, command) {
     try {
-      // First connect to the host
-      await this.connectToHost(hostAlias);
-
-      // Execute the command
-      const result = await this.ssh.execCommand(command);
+      // Use local ssh command - much simpler and more reliable
+      const sshCommand = `ssh "${hostAlias}" "${command.replace(/"/g, '\\"')}"`;
+      process.stderr.write(`Executing: ${sshCommand}\n`);
+      
+      const { stdout, stderr } = await execAsync(sshCommand, {
+        timeout: 30000, // 30 second timeout
+        maxBuffer: 1024 * 1024 * 10 // 10MB buffer
+      });
       
       return {
-        stdout: result.stdout,
-        stderr: result.stderr,
-        code: result.code || 0
+        stdout: stdout || '',
+        stderr: stderr || '',
+        code: 0
       };
     } catch (error) {
       process.stderr.write(`Error executing command on ${hostAlias}: ${error.message}\n`);
       return {
-        stdout: '',
-        stderr: error instanceof Error ? error.message : String(error),
-        code: 1
+        stdout: error.stdout || '',
+        stderr: error.stderr || error.message,
+        code: error.code || 1
       };
-    } finally {
-      this.ssh.dispose();
     }
   }
 
@@ -185,19 +188,13 @@ class SSHClient {
 
   async checkConnectivity(hostAlias) {
     try {
-      // Establish connection
-      await this.connectToHost(hostAlias);
-      
-      // Execute ping command
-      const result = await this.ssh.execCommand('echo connected');
-      
-      const connected = result.stdout.trim() === 'connected';
-      
-      this.ssh.dispose();
+      // Simple connectivity test using ssh
+      const result = await this.runRemoteCommand(hostAlias, 'echo connected');
+      const connected = result.code === 0 && result.stdout.trim() === 'connected';
       
       return {
         connected,
-        message: connected ? 'Connection successful' : 'Echo test failed'
+        message: connected ? 'Connection successful' : 'Connection failed'
       };
     } catch (error) {
       process.stderr.write(`Connectivity error with ${hostAlias}: ${error.message}\n`);
@@ -210,11 +207,10 @@ class SSHClient {
 
   async uploadFile(hostAlias, localPath, remotePath) {
     try {
-      await this.connectToHost(hostAlias);
+      const scpCommand = `scp "${localPath}" "${hostAlias}:${remotePath}"`;
+      process.stderr.write(`Executing: ${scpCommand}\n`);
       
-      await this.ssh.putFile(localPath, remotePath);
-      
-      this.ssh.dispose();
+      await execAsync(scpCommand, { timeout: 60000 }); // 60 second timeout for file transfer
       return true;
     } catch (error) {
       process.stderr.write(`Error uploading file to ${hostAlias}: ${error.message}\n`);
@@ -224,11 +220,10 @@ class SSHClient {
 
   async downloadFile(hostAlias, remotePath, localPath) {
     try {
-      await this.connectToHost(hostAlias);
+      const scpCommand = `scp "${hostAlias}:${remotePath}" "${localPath}"`;
+      process.stderr.write(`Executing: ${scpCommand}\n`);
       
-      await this.ssh.getFile(localPath, remotePath);
-      
-      this.ssh.dispose();
+      await execAsync(scpCommand, { timeout: 60000 }); // 60 second timeout for file transfer
       return true;
     } catch (error) {
       process.stderr.write(`Error downloading file from ${hostAlias}: ${error.message}\n`);
@@ -238,28 +233,19 @@ class SSHClient {
 
   async runCommandBatch(hostAlias, commands) {
     try {
-      await this.connectToHost(hostAlias);
-      
       const results = [];
       let success = true;
       
       for (const command of commands) {
-        const result = await this.ssh.execCommand(command);
-        const cmdResult = {
-          stdout: result.stdout,
-          stderr: result.stderr,
-          code: result.code || 0
-        };
+        const result = await this.runRemoteCommand(hostAlias, command);
+        results.push(result);
         
-        results.push(cmdResult);
-        
-        if (cmdResult.code !== 0) {
+        if (result.code !== 0) {
           success = false;
-          // We don't abort, execute all commands
+          // Continue executing remaining commands
         }
       }
       
-      this.ssh.dispose();
       return {
         results,
         success
@@ -274,39 +260,6 @@ class SSHClient {
         }],
         success: false
       };
-    }
-  }
-
-  async connectToHost(hostAlias) {
-    // Get host information
-    const hostInfo = await this.getHostInfo(hostAlias);
-    
-    if (!hostInfo) {
-      throw new Error(`Host ${hostAlias} not found`);
-    }
-
-    // Create connection configuration - keep it simple like manual SSH
-    const connectionConfig = {
-      host: hostInfo.hostname,
-      username: hostInfo.user,
-      port: hostInfo.port || 22,
-      readyTimeout: 20000,
-      agent: process.env.SSH_AUTH_SOCK
-    };
-
-    // Only add privateKeyPath if explicitly configured in SSH config
-    if (hostInfo.identityFile) {
-      connectionConfig.privateKeyPath = hostInfo.identityFile;
-    }
-
-    process.stderr.write(`Connecting to ${hostAlias} (${hostInfo.hostname}:${hostInfo.port}) as ${hostInfo.user}\n`);
-
-    try {
-      await this.ssh.connect(connectionConfig);
-      process.stderr.write(`Successfully connected to ${hostAlias}\n`);
-    } catch (error) {
-      process.stderr.write(`Connection failed: ${error.message}\n`);
-      throw new Error(`Connection to ${hostAlias} failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }

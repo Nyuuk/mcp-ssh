@@ -1,21 +1,30 @@
 # MCP SSH Agent
 
-A Model Context Protocol (MCP) agent for managing and controlling SSH connections via STDIO interface.
+A Model Context Protocol (MCP) server for managing and controlling SSH connections via STDIO interface. Uses native SSH commands for maximum reliability and compatibility.
 
 ## Overview
 
-This MCP server provides SSH operations through a clean, standardized interface that can be used by MCP-compatible language models. The server automatically discovers SSH hosts from your `~/.ssh/config` and `~/.ssh/known_hosts` files.
+This MCP server provides SSH operations through a clean, standardized interface that can be used by MCP-compatible language models. The server automatically discovers SSH hosts from your `~/.ssh/config` and `~/.ssh/known_hosts` files and executes commands using local `ssh` and `scp` tools.
+
+## Key Features
+
+- **Reliable SSH**: Uses native `ssh`/`scp` commands instead of JavaScript SSH libraries
+- **Automatic Discovery**: Finds hosts from SSH config and known_hosts files
+- **Full SSH Support**: Works with SSH agents, keys, and all authentication methods
+- **File Operations**: Upload and download files using `scp`
+- **Batch Commands**: Execute multiple commands in sequence
+- **Error Handling**: Comprehensive error reporting with timeouts
 
 ## Functions
 
 The agent provides the following MCP tools:
 
 1. **listKnownHosts()** - Lists all known SSH hosts, prioritizing entries from ~/.ssh/config first, then additional hosts from ~/.ssh/known_hosts
-2. **runRemoteCommand(hostAlias, command)** - Executes a command on a remote host
+2. **runRemoteCommand(hostAlias, command)** - Executes a command on a remote host using `ssh`
 3. **getHostInfo(hostAlias)** - Returns detailed configuration for a specific host
 4. **checkConnectivity(hostAlias)** - Tests SSH connectivity to a host
-5. **uploadFile(hostAlias, localPath, remotePath)** - Uploads a file to the remote host
-6. **downloadFile(hostAlias, remotePath, localPath)** - Downloads a file from the remote host
+5. **uploadFile(hostAlias, localPath, remotePath)** - Uploads a file to the remote host using `scp`
+6. **downloadFile(hostAlias, remotePath, localPath)** - Downloads a file from the remote host using `scp`
 7. **runCommandBatch(hostAlias, commands)** - Executes multiple commands sequentially
 
 ## Installation
