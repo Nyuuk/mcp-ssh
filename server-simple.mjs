@@ -285,17 +285,27 @@ class SSHClient {
       throw new Error(`Host ${hostAlias} not found`);
     }
 
-    // Create connection configuration
+    // Create connection configuration - keep it simple like manual SSH
     const connectionConfig = {
       host: hostInfo.hostname,
       username: hostInfo.user,
       port: hostInfo.port || 22,
-      privateKeyPath: hostInfo.identityFile
+      readyTimeout: 20000,
+      agent: process.env.SSH_AUTH_SOCK
     };
+
+    // Only add privateKeyPath if explicitly configured in SSH config
+    if (hostInfo.identityFile) {
+      connectionConfig.privateKeyPath = hostInfo.identityFile;
+    }
+
+    process.stderr.write(`Connecting to ${hostAlias} (${hostInfo.hostname}:${hostInfo.port}) as ${hostInfo.user}\n`);
 
     try {
       await this.ssh.connect(connectionConfig);
+      process.stderr.write(`Successfully connected to ${hostAlias}\n`);
     } catch (error) {
+      process.stderr.write(`Connection failed: ${error.message}\n`);
       throw new Error(`Connection to ${hostAlias} failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
