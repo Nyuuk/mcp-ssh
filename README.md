@@ -10,7 +10,7 @@ This MCP server provides SSH operations through a clean, standardized interface 
 
 The agent provides the following MCP tools:
 
-1. **listKnownHosts()** - Lists all known SSH hosts from configuration files
+1. **listKnownHosts()** - Lists all known SSH hosts, prioritizing entries from ~/.ssh/config first, then additional hosts from ~/.ssh/known_hosts
 2. **runRemoteCommand(hostAlias, command)** - Executes a command on a remote host
 3. **getHostInfo(hostAlias)** - Returns detailed configuration for a specific host
 4. **checkConnectivity(hostAlias)** - Tests SSH connectivity to a host

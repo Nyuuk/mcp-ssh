@@ -40,7 +40,7 @@ class SSHConfigParser {
       const config = sshConfig.parse(content);
       return this.extractHostsFromConfig(config);
     } catch (error) {
-      console.error('Error reading SSH config:', error);
+      process.stderr.write(`Error reading SSH config: ${error.message}\n`);
       return [];
     }
   }
@@ -57,6 +57,11 @@ class SSHConfigParser {
 
         // Search all entries for this host
         for (const param of section.config) {
+          // Safety check for undefined param
+          if (!param || !param.param) {
+            continue;
+          }
+          
           switch (param.param.toLowerCase()) {
             case 'hostname':
               hostInfo.hostname = param.value;
@@ -100,27 +105,40 @@ class SSHConfigParser {
 
       return knownHosts;
     } catch (error) {
-      console.error('Error reading known_hosts file:', error);
+      process.stderr.write(`Error reading known_hosts file: ${error.message}\n`);
       return [];
     }
   }
 
   async getAllKnownHosts() {
+    // First: Get all hosts from ~/.ssh/config (these are prioritized)
     const configHosts = await this.parseConfig();
+    
+    // Second: Get hostnames from ~/.ssh/known_hosts
     const knownHostnames = await this.parseKnownHosts();
 
-    // Add hosts from known_hosts that aren't in the config
+    // Create a comprehensive list starting with config hosts
+    const allHosts = [...configHosts];
+
+    // Add hosts from known_hosts that aren't already in the config
+    // These will appear after the config hosts
     for (const hostname of knownHostnames) {
       if (!configHosts.some(host => 
           host.hostname === hostname || 
           host.alias === hostname)) {
-        configHosts.push({
-          hostname: hostname
+        allHosts.push({
+          hostname: hostname,
+          source: 'known_hosts'
         });
       }
     }
 
-    return configHosts;
+    // Mark config hosts for clarity
+    configHosts.forEach(host => {
+      host.source = 'ssh_config';
+    });
+
+    return allHosts;
   }
 }
 
@@ -149,7 +167,7 @@ class SSHClient {
         code: result.code || 0
       };
     } catch (error) {
-      console.error(`Error executing command on ${hostAlias}:`, error);
+      process.stderr.write(`Error executing command on ${hostAlias}: ${error.message}\n`);
       return {
         stdout: '',
         stderr: error instanceof Error ? error.message : String(error),
@@ -182,7 +200,7 @@ class SSHClient {
         message: connected ? 'Connection successful' : 'Echo test failed'
       };
     } catch (error) {
-      console.error(`Connectivity error with ${hostAlias}:`, error);
+      process.stderr.write(`Connectivity error with ${hostAlias}: ${error.message}\n`);
       return {
         connected: false,
         message: error instanceof Error ? error.message : String(error)
@@ -199,7 +217,7 @@ class SSHClient {
       this.ssh.dispose();
       return true;
     } catch (error) {
-      console.error(`Error uploading file to ${hostAlias}:`, error);
+      process.stderr.write(`Error uploading file to ${hostAlias}: ${error.message}\n`);
       return false;
     }
   }
@@ -213,7 +231,7 @@ class SSHClient {
       this.ssh.dispose();
       return true;
     } catch (error) {
-      console.error(`Error downloading file from ${hostAlias}:`, error);
+      process.stderr.write(`Error downloading file from ${hostAlias}: ${error.message}\n`);
       return false;
     }
   }
@@ -247,7 +265,7 @@ class SSHClient {
         success
       };
     } catch (error) {
-      console.error(`Error during batch execution on ${hostAlias}:`, error);
+      process.stderr.write(`Error during batch execution on ${hostAlias}: ${error.message}\n`);
       return {
         results: [{
           stdout: '',
@@ -287,25 +305,25 @@ class SSHClient {
 async function main() {
   try {
     // Create an instance of the SSH client
-    console.log("Initializing SSH client...");
+    process.stderr.write("Initializing SSH client...\n");
     const sshClient = new SSHClient();
 
-    console.log("Creating MCP server...");
+    process.stderr.write("Creating MCP server...\n");
     // Create an MCP server
     const server = new Server(
       { name: "mcp-ssh", version: "1.0.0" },
       { capabilities: { tools: {} } }
     );
 
-    console.log("Setting up request handlers...");
+    process.stderr.write("Setting up request handlers...\n");
     // Handler for listing available tools
     server.setRequestHandler(ListToolsRequestSchema, async () => {
-      console.log("Received listTools request");
+      process.stderr.write("Received listTools request\n");
       return {
         tools: [
           {
             name: "listKnownHosts",
-            description: "Returns a consolidated list of all known SSH hosts",
+            description: "Returns a consolidated list of all known SSH hosts, prioritizing ~/.ssh/config entries first, then additional hosts from ~/.ssh/known_hosts",
             inputSchema: {
               type: "object",
               properties: {},
@@ -428,7 +446,7 @@ async function main() {
     // Handler for tool calls
     server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
-      console.log(`Received callTool request for tool: ${name}`);
+      process.stderr.write(`Received callTool request for tool: ${name}\n`);
 
       if (!args && name !== "listKnownHosts") {
         throw new Error(`No arguments provided for tool: ${name}`);
@@ -503,7 +521,7 @@ async function main() {
             throw new Error(`Unknown tool: ${name}`);
         }
       } catch (error) {
-        console.error(`Error executing tool ${name}:`, error);
+        process.stderr.write(`Error executing tool ${name}: ${error.message}\n`);
         return {
           content: [
             {
@@ -517,19 +535,19 @@ async function main() {
       }
     });
 
-    console.log("Starting MCP SSH Agent on STDIO...");
+    process.stderr.write("Starting MCP SSH Agent on STDIO...\n");
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.log("MCP SSH Agent connected and ready!");
+    process.stderr.write("MCP SSH Agent connected and ready!\n");
     
   } catch (error) {
-    console.error("Error starting MCP SSH Agent:", error);
+    process.stderr.write(`Error starting MCP SSH Agent: ${error.message}\n`);
     process.exit(1);
   }
 }
 
 // Start the server
 main().catch(error => {
-  console.error("Unhandled error:", error);
+  process.stderr.write(`Unhandled error: ${error.message}\n`);
   process.exit(1);
 });
