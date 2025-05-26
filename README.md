@@ -6,6 +6,12 @@ A Model Context Protocol (MCP) server for managing and controlling SSH connectio
 
 This MCP server provides SSH operations through a clean, standardized interface that can be used by MCP-compatible language models. The server automatically discovers SSH hosts from your `~/.ssh/config` and `~/.ssh/known_hosts` files and executes commands using local `ssh` and `scp` tools.
 
+## Example Usage
+
+![MCP SSH Agent Example](doc/example.png)
+
+The screenshot above shows the MCP SSH Agent in action, demonstrating how it integrates with MCP-compatible clients to provide seamless SSH operations.
+
 ## Key Features
 
 - **Reliable SSH**: Uses native `ssh`/`scp` commands instead of JavaScript SSH libraries
@@ -87,9 +93,11 @@ mcp-ssh/
 ├── server-simple.mjs          # Main MCP server implementation
 ├── package.json               # Dependencies and scripts
 ├── start.sh                   # Startup script (./start.sh)
+├── doc/
+│   └── example.png            # Usage example screenshot
 ├── src/
-│   ├── ssh-client.ts          # SSH operations implementation
-│   ├── ssh-config-parser.ts   # SSH configuration parsing
+│   ├── ssh-client.ts          # SSH operations implementation (TypeScript reference)
+│   ├── ssh-config-parser.ts   # SSH configuration parsing (TypeScript reference)
 │   ├── types.ts               # TypeScript type definitions
 │   └── index.ts               # (Empty - using server-simple.mjs)
 ├── README.md                  # This file
@@ -117,4 +125,10 @@ mcp-ssh/
 
 ## Development
 
-The server is implemented in JavaScript using the `@modelcontextprotocol/sdk` for MCP compliance and `node-ssh` for SSH operations.
+The server is implemented in JavaScript using:
+- `@modelcontextprotocol/sdk` for MCP protocol compliance
+- Native `ssh` and `scp` commands for reliable SSH operations
+- `ssh-config` for parsing SSH configuration files
+- Node.js `child_process` for command execution
+
+The implementation prioritizes reliability and simplicity by leveraging the existing SSH infrastructure rather than complex JavaScript SSH libraries.
