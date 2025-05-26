@@ -1,0 +1,31 @@
+{
+  "name": "mcp-ssh",
+  "version": "1.0.0",
+  "description": "MCP Agent for managing SSH hosts",
+  "main": "server-simple.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node server-simple.mjs",
+    "dev": "node server-simple.mjs"
+  },
+  "keywords": [
+    "mcp",
+    "ssh",
+    "agent"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@microsoft/model-runner-shared": "^0.1.2",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "ssh2": "^1.15.0",
+    "ssh-config": "^4.4.0",
+    "node-ssh": "^13.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.26",
+    "@types/ssh2": "^1.15.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.3"
+  }
+}
