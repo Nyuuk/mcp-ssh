@@ -24,6 +24,16 @@ const sshConfig = require('ssh-config');
 
 const execAsync = promisify(exec);
 
+// Silent mode for MCP clients - disable debug output when used as MCP server
+const SILENT_MODE = process.env.MCP_SILENT === 'true' || process.argv.includes('--silent');
+
+// Debug logging function - only outputs in non-silent mode
+function debugLog(message) {
+  if (!SILENT_MODE) {
+    process.stderr.write(message);
+  }
+}
+
 // Import MCP components using proper export paths
 const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
@@ -43,7 +53,7 @@ class SSHConfigParser {
       const config = sshConfig.parse(content);
       return this.extractHostsFromConfig(config);
     } catch (error) {
-      process.stderr.write(`Error reading SSH config: ${error.message}\n`);
+      debugLog(`Error reading SSH config: ${error.message}\n`);
       return [];
     }
   }
@@ -108,7 +118,7 @@ class SSHConfigParser {
 
       return knownHosts;
     } catch (error) {
-      process.stderr.write(`Error reading known_hosts file: ${error.message}\n`);
+      debugLog(`Error reading known_hosts file: ${error.message}\n`);
       return [];
     }
   }
@@ -159,7 +169,7 @@ class SSHClient {
     try {
       // Use local ssh command - much simpler and more reliable
       const sshCommand = `ssh "${hostAlias}" "${command.replace(/"/g, '\\"')}"`;
-      process.stderr.write(`Executing: ${sshCommand}\n`);
+      debugLog(`Executing: ${sshCommand}\n`);
       
       const { stdout, stderr } = await execAsync(sshCommand, {
         timeout: 30000, // 30 second timeout
@@ -172,7 +182,7 @@ class SSHClient {
         code: 0
       };
     } catch (error) {
-      process.stderr.write(`Error executing command on ${hostAlias}: ${error.message}\n`);
+      debugLog(`Error executing command on ${hostAlias}: ${error.message}\n`);
       return {
         stdout: error.stdout || '',
         stderr: error.stderr || error.message,
@@ -197,7 +207,7 @@ class SSHClient {
         message: connected ? 'Connection successful' : 'Connection failed'
       };
     } catch (error) {
-      process.stderr.write(`Connectivity error with ${hostAlias}: ${error.message}\n`);
+      debugLog(`Connectivity error with ${hostAlias}: ${error.message}\n`);
       return {
         connected: false,
         message: error instanceof Error ? error.message : String(error)
@@ -208,12 +218,12 @@ class SSHClient {
   async uploadFile(hostAlias, localPath, remotePath) {
     try {
       const scpCommand = `scp "${localPath}" "${hostAlias}:${remotePath}"`;
-      process.stderr.write(`Executing: ${scpCommand}\n`);
+      debugLog(`Executing: ${scpCommand}\n`);
       
       await execAsync(scpCommand, { timeout: 60000 }); // 60 second timeout for file transfer
       return true;
     } catch (error) {
-      process.stderr.write(`Error uploading file to ${hostAlias}: ${error.message}\n`);
+      debugLog(`Error uploading file to ${hostAlias}: ${error.message}\n`);
       return false;
     }
   }
@@ -221,12 +231,12 @@ class SSHClient {
   async downloadFile(hostAlias, remotePath, localPath) {
     try {
       const scpCommand = `scp "${hostAlias}:${remotePath}" "${localPath}"`;
-      process.stderr.write(`Executing: ${scpCommand}\n`);
+      debugLog(`Executing: ${scpCommand}\n`);
       
       await execAsync(scpCommand, { timeout: 60000 }); // 60 second timeout for file transfer
       return true;
     } catch (error) {
-      process.stderr.write(`Error downloading file from ${hostAlias}: ${error.message}\n`);
+      debugLog(`Error downloading file from ${hostAlias}: ${error.message}\n`);
       return false;
     }
   }
@@ -251,7 +261,7 @@ class SSHClient {
         success
       };
     } catch (error) {
-      process.stderr.write(`Error during batch execution on ${hostAlias}: ${error.message}\n`);
+      debugLog(`Error during batch execution on ${hostAlias}: ${error.message}\n`);
       return {
         results: [{
           stdout: '',
@@ -268,20 +278,20 @@ class SSHClient {
 async function main() {
   try {
     // Create an instance of the SSH client
-    process.stderr.write("Initializing SSH client...\n");
+    debugLog("Initializing SSH client...\n");
     const sshClient = new SSHClient();
 
-    process.stderr.write("Creating MCP server...\n");
+    debugLog("Creating MCP server...\n");
     // Create an MCP server
     const server = new Server(
       { name: "mcp-ssh", version: "1.0.0" },
       { capabilities: { tools: {} } }
     );
 
-    process.stderr.write("Setting up request handlers...\n");
+    debugLog("Setting up request handlers...\n");
     // Handler for listing available tools
     server.setRequestHandler(ListToolsRequestSchema, async () => {
-      process.stderr.write("Received listTools request\n");
+      debugLog("Received listTools request\n");
       return {
         tools: [
           {
@@ -409,7 +419,7 @@ async function main() {
     // Handler for tool calls
     server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
-      process.stderr.write(`Received callTool request for tool: ${name}\n`);
+      debugLog(`Received callTool request for tool: ${name}\n`);
 
       if (!args && name !== "listKnownHosts") {
         throw new Error(`No arguments provided for tool: ${name}`);
@@ -484,7 +494,7 @@ async function main() {
             throw new Error(`Unknown tool: ${name}`);
         }
       } catch (error) {
-        process.stderr.write(`Error executing tool ${name}: ${error.message}\n`);
+        debugLog(`Error executing tool ${name}: ${error.message}\n`);
         return {
           content: [
             {
@@ -498,19 +508,19 @@ async function main() {
       }
     });
 
-    process.stderr.write("Starting MCP SSH Agent on STDIO...\n");
+    debugLog("Starting MCP SSH Agent on STDIO...\n");
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    process.stderr.write("MCP SSH Agent connected and ready!\n");
+    debugLog("MCP SSH Agent connected and ready!\n");
     
   } catch (error) {
-    process.stderr.write(`Error starting MCP SSH Agent: ${error.message}\n`);
+    debugLog(`Error starting MCP SSH Agent: ${error.message}\n`);
     process.exit(1);
   }
 }
 
 // Start the server
 main().catch(error => {
-  process.stderr.write(`Unhandled error: ${error.message}\n`);
+  debugLog(`Unhandled error: ${error.message}\n`);
   process.exit(1);
 });
