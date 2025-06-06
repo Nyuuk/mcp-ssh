@@ -1,20 +1,44 @@
 {
-  "name": "mcp-ssh",
+  "name": "@aiondadotcom/mcp-ssh",
   "version": "1.0.0",
-  "description": "MCP Agent for managing SSH hosts",
+  "description": "MCP Agent for managing SSH hosts - A Model Context Protocol server for SSH operations",
   "main": "server-simple.mjs",
+  "bin": {
+    "mcp-ssh": "server-simple.mjs"
+  },
   "type": "module",
   "scripts": {
     "start": "node server-simple.mjs",
-    "dev": "node server-simple.mjs"
+    "dev": "node server-simple.mjs",
+    "build": "tsc",
+    "test": "echo \"No tests specified\" && exit 0",
+    "prepublishOnly": "npm run test",
+    "version": "npm run build && git add -A",
+    "postversion": "git push && git push --tags"
   },
   "keywords": [
     "mcp",
     "ssh",
-    "agent"
+    "agent",
+    "model-context-protocol",
+    "claude",
+    "ai",
+    "remote",
+    "server"
   ],
-  "author": "",
+  "author": "aionda.com",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aiondadotcom/mcp-ssh.git"
+  },
+  "homepage": "https://github.com/aiondadotcom/mcp-ssh",
+  "bugs": {
+    "url": "https://github.com/aiondadotcom/mcp-ssh/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
     "ssh-config": "^5.0.0"

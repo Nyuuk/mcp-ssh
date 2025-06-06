@@ -1,0 +1,29 @@
+# Development files
+src/
+tsconfig.json
+.vscode/
+IMPLEMENTATION_NOTES.md
+
+# Documentation images (keep README.md)
+doc/
+
+# Development scripts
+start.sh
+start-silent.sh
+
+# Git and CI/CD
+.git/
+.github/
+.gitignore
+*.log
+node_modules/
+
+# Generated files
+*.tgz
+
+# Keep these files for npm package
+!package.json
+!README.md
+!server-simple.mjs
+!LICENSE
+!CHANGELOG.md
