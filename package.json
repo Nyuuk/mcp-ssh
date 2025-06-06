@@ -1,6 +1,6 @@
 {
   "name": "@aiondadotcom/mcp-ssh",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "MCP Agent for managing SSH hosts - A Model Context Protocol server for SSH operations",
   "main": "server-simple.mjs",
   "bin": {
