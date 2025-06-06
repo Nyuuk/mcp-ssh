@@ -1,6 +1,6 @@
 {
   "name": "@aiondadotcom/mcp-ssh",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP Agent for managing SSH hosts - A Model Context Protocol server for SSH operations",
   "main": "server-simple.mjs",
   "bin": {
@@ -10,10 +10,10 @@
   "scripts": {
     "start": "node server-simple.mjs",
     "dev": "node server-simple.mjs",
-    "build": "tsc",
+    "build": "echo \"Build skipped\"",
     "test": "echo \"No tests specified\" && exit 0",
     "prepublishOnly": "npm run test",
-    "version": "npm run build && git add -A",
+    "version": "git add -A",
     "postversion": "git push && git push --tags"
   },
   "keywords": [
