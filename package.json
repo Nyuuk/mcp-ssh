@@ -4,7 +4,7 @@
   "description": "MCP Agent for managing SSH hosts - A Model Context Protocol server for SSH operations",
   "main": "server-simple.mjs",
   "bin": {
-    "mcp-ssh": "server-simple.mjs"
+    "mcp-ssh": "bin/mcp-ssh.js"
   },
   "type": "module",
   "scripts": {
