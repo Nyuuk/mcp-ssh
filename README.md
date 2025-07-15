@@ -8,15 +8,25 @@ This MCP server provides SSH operations through a clean, standardized interface 
 
 ## Quick Start
 
-### Installation via npx (Recommended)
+### Desktop Extension Installation (Recommended)
+
+The easiest way to install MCP SSH Agent is through the Desktop Extension (.dxt) format:
+
+1. Download the latest `mcp-ssh-*.dxt` file from the [GitHub releases page](https://github.com/aiondadotcom/mcp-ssh/releases)
+2. Double-click the `.dxt` file to install it in Claude Desktop
+3. The SSH tools will be automatically available in your conversations with Claude
+
+### Alternative Installation Methods
+
+#### Installation via npx
 
 ```bash
 npx @aiondadotcom/mcp-ssh
 ```
 
-### Integration with Claude Desktop
+#### Manual Claude Desktop Configuration
 
-To use this MCP server with Claude Desktop, add the following configuration to your MCP settings file:
+To use this MCP server with Claude Desktop using manual configuration, add the following to your MCP settings file:
 
 **On macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 **On Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
@@ -33,8 +43,6 @@ To use this MCP server with Claude Desktop, add the following configuration to y
 ```
 
 After adding this configuration, restart Claude Desktop. The SSH tools will be available for use in your conversations with Claude.
-
-### Alternative Installation Methods
 
 #### Global Installation
 ```bash
@@ -464,6 +472,41 @@ Host staging
 - **Monitor SSH logs** regularly
 - **Use SSH key forwarding carefully** (disable when not needed)
 
+## Building Desktop Extensions
+
+For developers who want to build DXT packages locally:
+
+### Prerequisites
+
+- Node.js 18 or higher
+- npm
+
+### Building DXT Package
+
+```bash
+# Install dependencies
+npm install
+
+# Build the DXT package
+npm run build:dxt
+```
+
+This creates a `.dxt` file in the `build/` directory that can be installed in Claude Desktop.
+
+### Publishing DXT Releases
+
+To publish a new DXT release:
+
+```bash
+# Build the DXT package
+npm run build:dxt
+
+# Create a GitHub release with the DXT file
+gh release create v1.0.3 build/mcp-ssh-1.0.3.dxt --title "Release v1.0.3" --notes "MCP SSH Agent v1.0.3"
+```
+
+The DXT file will be available as a release asset for users to download and install.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -477,6 +520,7 @@ MIT License - see LICENSE file for details.
 ```
 mcp-ssh/
 ├── server-simple.mjs          # Main MCP server implementation
+├── manifest.json              # DXT package manifest
 ├── package.json               # Dependencies and scripts
 ├── README.md                  # Documentation
 ├── LICENSE                    # MIT License
@@ -484,6 +528,8 @@ mcp-ssh/
 ├── PUBLISHING.md              # Publishing instructions
 ├── start.sh                   # Development startup script
 ├── start-silent.sh            # Silent startup script
+├── scripts/
+│   └── build-dxt.sh           # DXT package build script
 ├── doc/
 │   ├── example.png            # Usage example screenshot
 │   └── Claude.png             # Claude Desktop integration example

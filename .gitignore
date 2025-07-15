@@ -114,3 +114,7 @@ Thumbs.db
 # Build outputs
 dist/
 build/
+
+# DXT build artifacts
+*.dxt
+releases/

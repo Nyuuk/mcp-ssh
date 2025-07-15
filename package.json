@@ -11,6 +11,7 @@
     "start": "node server-simple.mjs",
     "dev": "node server-simple.mjs",
     "build": "echo \"Build skipped\"",
+    "build:dxt": "./scripts/build-dxt.sh",
     "test": "echo \"No tests specified\" && exit 0",
     "prepublishOnly": "npm run test",
     "version": "git add -A",
@@ -44,6 +45,7 @@
     "ssh-config": "^5.0.0"
   },
   "devDependencies": {
+    "@anthropic-ai/dxt": "^0.2.5",
     "@types/node": "^20.11.26",
     "@types/ssh2": "^1.15.0",
     "ts-node": "^10.9.2",
