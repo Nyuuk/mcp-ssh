@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2025-08-17
+
+### Security
+- **SECURITY FIX**: Fixed command injection vulnerability in SSH operations (commit 5b9b9c5)
+- **SECURITY FIX**: Upgraded `tmp` dependency to version 0.2.5 to address CVE vulnerability
+- Fixed arbitrary temporary file/directory write via symbolic link in `tmp` package (GHSA-52f5-9888-hmc6)
+- Added dependency overrides to ensure all transitive dependencies use secure `tmp` version
+- Enhanced input validation and sanitization for SSH commands and file paths
+
+### Technical
+- Added `tmp: ">=0.2.4"` to devDependencies to force secure version
+- Added npm overrides configuration to enforce secure tmp version across entire dependency tree
+- Updated package-lock.json to reflect security fixes
+
 ## [1.0.3] - 2025-06-06
 
 ### Added

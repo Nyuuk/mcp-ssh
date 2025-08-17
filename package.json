@@ -1,6 +1,6 @@
 {
   "name": "@aiondadotcom/mcp-ssh",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "MCP Agent for managing SSH hosts - A Model Context Protocol server for SSH operations",
   "main": "server-simple.mjs",
   "bin": {
@@ -48,7 +48,11 @@
     "@anthropic-ai/dxt": "^0.2.5",
     "@types/node": "^20.11.26",
     "@types/ssh2": "^1.15.0",
+    "tmp": ">=0.2.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.3"
+  },
+  "overrides": {
+    "tmp": ">=0.2.4"
   }
 }
