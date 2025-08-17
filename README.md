@@ -166,16 +166,59 @@ The server communicates via clean JSON over STDIO, making it perfect for MCP cli
 ### SSH Configuration
 
 The agent reads from standard SSH configuration files:
-- `~/.ssh/config` - SSH client configuration
+- `~/.ssh/config` - SSH client configuration (supports Include directives)
 - `~/.ssh/known_hosts` - Known host keys
 
 Make sure your SSH keys are properly configured and accessible via SSH agent or key files.
 
+#### Include Directive Support
+
+The MCP SSH Agent fully supports SSH `Include` directives to organize your configuration across multiple files. However, there's an important SSH bug to be aware of:
+
+**⚠️ SSH Include Directive Bug Warning**
+
+SSH has a configuration parsing bug where `Include` statements **must be placed at the beginning** of your `~/.ssh/config` file to work correctly. If placed at the end, SSH will read them but won't properly apply the included configurations.
+
+**✅ Correct placement (at the beginning):**
+```ssh-config
+# ~/.ssh/config
+Include ~/.ssh/config.d/*
+Include ~/.ssh/work-hosts
+
+# Global settings
+ServerAliveInterval 55
+
+# Host definitions
+Host myserver
+    HostName example.com
+```
+
+**❌ Incorrect placement (at the end) - won't work:**
+```ssh-config
+# ~/.ssh/config
+# Global settings
+ServerAliveInterval 55
+
+# Host definitions
+Host myserver
+    HostName example.com
+
+# These Include statements won't work properly due to SSH bug:
+Include ~/.ssh/config.d/*
+Include ~/.ssh/work-hosts
+```
+
+The MCP SSH Agent correctly processes `Include` directives regardless of their placement in the file, so you'll get full host discovery even if SSH itself has issues with your configuration.
+
 #### Example ~/.ssh/config
 
-Here's an example SSH configuration file that demonstrates various connection scenarios:
+Here's an example SSH configuration file that demonstrates various connection scenarios including Include directives:
 
 ```ssh-config
+# Include directives must be at the beginning due to SSH bug
+Include ~/.ssh/config.d/*
+Include ~/.ssh/work-servers
+
 # Global settings - keep connections alive
 ServerAliveInterval 55
 

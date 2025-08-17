@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **NEW FEATURE**: SSH config Include directive support
+- Added recursive processing of Include directives in SSH configuration files
+- Support for glob patterns in Include paths (e.g., `Include ~/.ssh/configs/*`)
+- Enhanced SSH host discovery from included configuration files
+- Added `glob` dependency for Include path pattern matching
+
+### Enhanced
+- Improved SSH configuration parsing to handle complex Include hierarchies
+- Enhanced host discovery to recursively process all included config files
+- Better error handling for malformed or inaccessible Include files
+
 ## [1.0.4] - 2025-08-17
 
 ### Security

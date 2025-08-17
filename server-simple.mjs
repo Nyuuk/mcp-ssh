@@ -52,21 +52,88 @@ class SSHConfigParser {
     try {
       const content = await readFile(this.configPath, 'utf-8');
       const config = sshConfig.parse(content);
-      return this.extractHostsFromConfig(config);
+      return this.extractHostsFromConfig(config, this.configPath);
     } catch (error) {
       debugLog(`Error reading SSH config: ${error.message}\n`);
       return [];
     }
   }
 
-  extractHostsFromConfig(config) {
+  async processIncludeDirectives(configPath) {
+    try {
+      const content = await readFile(configPath, 'utf-8');
+      const config = sshConfig.parse(content);
+      const hosts = [];
+      
+      for (const section of config) {
+        if (section.param === 'Include' && section.value) {
+          const includePaths = this.expandIncludePath(section.value, configPath);
+          
+          for (const includePath of includePaths) {
+            try {
+              const includeHosts = await this.processIncludeDirectives(includePath);
+              hosts.push(...includeHosts);
+            } catch (error) {
+              debugLog(`Error processing include file ${includePath}: ${error.message}\n`);
+            }
+          }
+        }
+      }
+      
+      // Add hosts from the current config file
+      const currentHosts = this.extractHostsFromConfig(config, configPath);
+      hosts.push(...currentHosts);
+      
+      return hosts;
+    } catch (error) {
+      debugLog(`Error processing config file ${configPath}: ${error.message}\n`);
+      return [];
+    }
+  }
+
+  expandIncludePath(includePath, baseConfigPath) {
+    const { dirname, resolve } = require('path');
+    const { glob } = require('glob');
+    const { existsSync } = require('fs');
+    
+    // Handle tilde expansion
+    if (includePath.startsWith('~/')) {
+      includePath = includePath.replace('~', homedir());
+    }
+    
+    // Handle relative paths
+    if (!includePath.startsWith('/')) {
+      const baseDir = dirname(baseConfigPath);
+      includePath = resolve(baseDir, includePath);
+    }
+    
+    try {
+      // Handle glob patterns
+      if (includePath.includes('*') || includePath.includes('?')) {
+        return glob.sync(includePath).filter(path => existsSync(path));
+      } else {
+        return existsSync(includePath) ? [includePath] : [];
+      }
+    } catch (error) {
+      debugLog(`Error expanding include path ${includePath}: ${error.message}\n`);
+      return [];
+    }
+  }
+
+  extractHostsFromConfig(config, configPath) {
     const hosts = [];
 
     for (const section of config) {
+      // Skip Include directives as they are processed separately
+      if (section.param === 'Include') {
+        continue;
+      }
+      
       if (section.param === 'Host' && section.value !== '*') {
         const hostInfo = {
           hostname: '',
           alias: section.value,
+          configFile: configPath
         };
 
         // Search all entries for this host
@@ -125,8 +192,8 @@ class SSHConfigParser {
   }
 
   async getAllKnownHosts() {
-    // First: Get all hosts from ~/.ssh/config (these are prioritized)
-    const configHosts = await this.parseConfig();
+    // First: Get all hosts from ~/.ssh/config including Include directives (these are prioritized)
+    const configHosts = await this.processIncludeDirectives(this.configPath);
     
     // Second: Get hostnames from ~/.ssh/known_hosts
     const knownHostnames = await this.parseKnownHosts();
@@ -192,7 +259,7 @@ class SSHClient {
   }
 
   async getHostInfo(hostAlias) {
-    const hosts = await this.configParser.parseConfig();
+    const hosts = await this.configParser.processIncludeDirectives(this.configParser.configPath);
     return hosts.find(host => host.alias === hostAlias || host.hostname === hostAlias) || null;
   }
 

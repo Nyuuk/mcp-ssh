@@ -42,6 +42,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
+    "glob": "^11.0.3",
     "ssh-config": "^5.0.0"
   },
   "devDependencies": {
