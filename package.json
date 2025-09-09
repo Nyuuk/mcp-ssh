@@ -1,5 +1,5 @@
 {
-  "name": "@aiondadotcom/mcp-ssh",
+  "name": "@nyuuk/mcp-ssh",
   "version": "1.1.0",
   "description": "MCP Agent for managing SSH hosts - A Model Context Protocol server for SSH operations",
   "main": "server-simple.mjs",
@@ -27,15 +27,15 @@
     "remote",
     "server"
   ],
-  "author": "aionda.com",
+  "author": "nyuuk",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aiondadotcom/mcp-ssh.git"
+    "url": "git+https://github.com/Nyuuk/mcp-ssh.git"
   },
-  "homepage": "https://github.com/aiondadotcom/mcp-ssh",
+  "homepage": "https://github.com/Nyuuk/mcp-ssh",
   "bugs": {
-    "url": "https://github.com/aiondadotcom/mcp-ssh/issues"
+    "url": "https://github.com/Nyuuk/mcp-ssh/issues"
   },
   "publishConfig": {
     "access": "public"
