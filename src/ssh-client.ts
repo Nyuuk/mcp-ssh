@@ -28,7 +28,7 @@ export class SSHClient {
 
       // Execute the command
       const result = await this.ssh.execCommand(command);
-      
+
       return {
         stdout: result.stdout,
         stderr: result.stderr,
@@ -61,14 +61,14 @@ export class SSHClient {
     try {
       // Establish connection
       await this.connectToHost(hostAlias);
-      
+
       // Execute ping command
       const result = await this.ssh.execCommand('echo connected');
-      
+
       const connected = result.stdout.trim() === 'connected';
-      
+
       this.ssh.dispose();
-      
+
       return {
         connected,
         message: connected ? 'Connection successful' : 'Echo test failed'
@@ -88,9 +88,9 @@ export class SSHClient {
   async uploadFile(hostAlias: string, localPath: string, remotePath: string): Promise<boolean> {
     try {
       await this.connectToHost(hostAlias);
-      
+
       await this.ssh.putFile(localPath, remotePath);
-      
+
       this.ssh.dispose();
       return true;
     } catch (error) {
@@ -105,9 +105,9 @@ export class SSHClient {
   async downloadFile(hostAlias: string, remotePath: string, localPath: string): Promise<boolean> {
     try {
       await this.connectToHost(hostAlias);
-      
+
       await this.ssh.getFile(localPath, remotePath);
-      
+
       this.ssh.dispose();
       return true;
     } catch (error) {
@@ -122,10 +122,10 @@ export class SSHClient {
   async runCommandBatch(hostAlias: string, commands: string[]): Promise<BatchCommandResult> {
     try {
       await this.connectToHost(hostAlias);
-      
+
       const results: CommandResult[] = [];
       let success = true;
-      
+
       for (const command of commands) {
         const result = await this.ssh.execCommand(command);
         const cmdResult: CommandResult = {
@@ -133,15 +133,15 @@ export class SSHClient {
           stderr: result.stderr,
           code: result.code || 0
         };
-        
+
         results.push(cmdResult);
-        
+
         if (cmdResult.code !== 0) {
           success = false;
           // We don't abort, execute all commands
         }
       }
-      
+
       this.ssh.dispose();
       return {
         results,
@@ -166,7 +166,7 @@ export class SSHClient {
   private async connectToHost(hostAlias: string): Promise<void> {
     // Get host information
     const hostInfo = await this.getHostInfo(hostAlias);
-    
+
     if (!hostInfo) {
       throw new Error(`Host ${hostAlias} not found`);
     }

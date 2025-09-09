@@ -74,6 +74,7 @@ This screenshot demonstrates the MCP SSH Agent integrated with Claude, showing h
 - **Reliable SSH**: Uses native `ssh`/`scp` commands instead of JavaScript SSH libraries
 - **Automatic Discovery**: Finds hosts from SSH config and known_hosts files
 - **Full SSH Support**: Works with SSH agents, keys, and all authentication methods
+- **Session Reuse**: Optional connection multiplexing for improved performance
 - **File Operations**: Upload and download files using `scp`
 - **Batch Commands**: Execute multiple commands in sequence
 - **Error Handling**: Comprehensive error reporting with timeouts
@@ -162,6 +163,42 @@ The server communicates via clean JSON over STDIO, making it perfect for MCP cli
 ### Environment Variables
 
 - `MCP_SILENT=true` - Disable debug output (automatically set when used as MCP server)
+- `SSH_SESSION_REUSE=false` - Disable SSH session reuse (default: enabled)
+- `SSH_SESSION_TIMEOUT=300000` - Session timeout in milliseconds (default: 5 minutes)
+
+### SSH Session Reuse
+
+The MCP SSH Agent supports SSH connection multiplexing using OpenSSH's ControlMaster feature, which significantly improves performance for multiple operations to the same host:
+
+#### Benefits:
+- **Faster Connections**: Reuse existing SSH connections instead of establishing new ones
+- **Reduced Latency**: Eliminates SSH handshake overhead for subsequent commands
+- **Better Performance**: Especially beneficial for batch operations and file transfers
+- **Resource Efficient**: Fewer concurrent SSH processes and network connections
+
+#### How It Works:
+1. First command to a host creates a master SSH connection in the background
+2. Subsequent commands reuse the existing connection via a control socket
+3. Sessions automatically timeout after 5 minutes of inactivity
+4. Graceful fallback to direct connections if session multiplexing fails
+
+#### Configuration:
+```bash
+# Enable session reuse (default)
+export SSH_SESSION_REUSE=true
+
+# Disable session reuse (use new connection for each command)
+export SSH_SESSION_REUSE=false
+
+# Set custom session timeout (5 minutes default)
+export SSH_SESSION_TIMEOUT=600000  # 10 minutes
+```
+
+#### When to Disable:
+- **High Security Requirements**: Each connection uses fresh authentication
+- **Resource Constraints**: Each session maintains a background SSH process
+- **Troubleshooting**: Disable to isolate connection issues
+- **Network Instability**: Fresh connections may be more reliable on unstable networks
 
 ### SSH Configuration
 

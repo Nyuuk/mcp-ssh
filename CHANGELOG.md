@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-01-XX
+
+### Added
+- **NEW FEATURE**: SSH session reuse with connection multiplexing
+- Implemented SSH ControlMaster support for improved performance
+- Added session timeout management (default: 5 minutes)
+- Graceful fallback to direct connections when session reuse fails
+- New environment variables: `SSH_SESSION_REUSE`, `SSH_SESSION_TIMEOUT`
+
+### Enhanced
+- Improved performance for multiple operations to the same host
+- Reduced connection latency through session multiplexing
+- Better resource management with automatic session cleanup
+- Enhanced error handling with session-aware fallback mechanisms
+
+### Configuration
+- Session reuse enabled by default for better performance
+- Configurable session timeout via environment variable
+- Optional session reuse disable for high-security scenarios
+
 ## [1.1.0] - 2025-08-17
 
 ### Added

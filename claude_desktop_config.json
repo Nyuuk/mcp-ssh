@@ -1,7 +1,15 @@
 {
   "mcpServers": {
-    "mcp-ssh": {
-      "command": "/absolute/path/to/mcp-ssh/start.sh"
+    "mcp-ssh-dev": {
+      "command": "node",
+      "args": [
+        "/Users/25040100/Documents/my-project/mcp/mcp-ssh/server-simple.mjs"
+      ],
+      "env": {
+        "MCP_SILENT": "false",
+        "SSH_SESSION_REUSE": "true",
+        "SSH_SESSION_TIMEOUT": "300000"
+      }
     }
   }
 }
